@@ -1,0 +1,29 @@
+#!/usr/bin/env python
+import musicbrainzngs
+import argparse
+ARTIST="Iced Earth"
+TITLE="Days of Purgatory"
+DISC=0
+
+def make_arg_parser():
+   parser = argparse.ArgumentParser() 
+   parser.add_argument("artistname", help="Name of the Artist")
+   parser.add_argument("albumtitle", help="Title of the Album")
+   parser.add_argument("--discno", help="Number of the disc, CAUTION: Numbering starts at 0!", default=0, type=int)
+   return parser
+
+def tracklist_from_musicbrainz(artist, albumtitle, disc=0):
+    musicbrainzngs.set_useragent("musicbrainz-tracklist", "0.1", "grinsekatz@hotmail.com")
+    release_id = [item for item in musicbrainzngs.search_releases(artistname=artist)["release-list"] if item["title"] == albumtitle][0]["id"]
+    release = musicbrainzngs.get_release_by_id(release_id, includes=["recordings"])
+    tracklist = release["release"]["medium-list"][disc]["track-list"] 
+    return tracklist
+
+if __name__ == "__main__":
+    parser = make_arg_parser()
+    args = parser.parse_args()
+    tracklist = tracklist_from_musicbrainz(args.artistname, args.albumtitle, args.discno)
+    tracks = [(track["number"], track["recording"]["title"]) for track in tracklist]
+    tracks = sorted(tracks, key=lambda track: int(track[0]))
+    for track in tracks:
+        print(track[1])
